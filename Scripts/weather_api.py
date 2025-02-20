@@ -1,6 +1,7 @@
 import openmeteo_requests
 import requests
 import pandas as pd
+import json
 from datetime import datetime, timedelta
 
 # Setup the Open-Meteo API client
@@ -36,9 +37,34 @@ hourly_data = {
 }
 hourly_data["temperature_2m"] = hourly_temperature_2m
 
-# Create and display dataframe
+# Create dataframe
 hourly_dataframe = pd.DataFrame(data=hourly_data)
-print(f"Coordinates: {response.Latitude()}°N {response.Longitude()}°E")
+
+# Save as CSV
+start_date = params['start_date'].replace('-', '')
+end_date = params['end_date'].replace('-', '')
+csv_filename = f'weather_data_{start_date}_{end_date}.csv'
+hourly_dataframe.to_csv(csv_filename, index=False)
+
+# Convert to JSON and save
+# weather_data = {
+#     "coordinates": {
+#         "latitude": response.Latitude(),
+#         "longitude": response.Longitude()
+#     },
+#     "timezone": {
+#         "name": response.Timezone(),
+#         "abbreviation": response.TimezoneAbbreviation()
+#     },
+#     "hourly_data": hourly_dataframe.to_dict(orient='records')
+# }
+
+# # Save JSON
+# with open('weather_data.json', 'w') as f:
+#     json.dump(weather_data, f, indent=4)
+
+print(f"File saved: weather_data.csv")
+print(f"\nCoordinates: {response.Latitude()}°N {response.Longitude()}°E")
 print(f"Timezone: {response.Timezone()} {response.TimezoneAbbreviation()}")
 print("\nHourly Temperature Data:")
 print(hourly_dataframe)
