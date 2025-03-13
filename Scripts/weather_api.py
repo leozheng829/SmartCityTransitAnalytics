@@ -46,18 +46,26 @@ hourly_precipitation = hourly.Variables(2).ValuesAsNumpy()
 hourly_weather_code = hourly.Variables(3).ValuesAsNumpy()
 hourly_relative_humidity_2m = hourly.Variables(4).ValuesAsNumpy()
 
-hourly_data = {"date": pd.date_range(
-	start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
-	end = pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True),
-	freq = pd.Timedelta(seconds = hourly.Interval()),
-	inclusive = "left"
-).strftime('%Y-%m-%d %H:%M')}
+hourly_data = {
+	"date": pd.date_range(
+		start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
+		end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
+		freq=pd.Timedelta(seconds=hourly.Interval()),
+		inclusive="left"
+	).strftime('%Y-%m-%d'),
+	"time": pd.date_range(
+		start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
+		end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
+		freq=pd.Timedelta(seconds=hourly.Interval()),
+		inclusive="left"
+	).strftime('%H:%M')
+}
 
-hourly_data["temperature_2m"] = hourly_temperature_2m
-hourly_data["apparent_temperature"] = hourly_apparent_temperature
-hourly_data["precipitation"] = hourly_precipitation
-hourly_data["weather_code"] = hourly_weather_code
-hourly_data["relative_humidity_2m"] = hourly_relative_humidity_2m
+hourly_data["hourly_temperature_2m"] = hourly_temperature_2m
+hourly_data["hourly_apparent_temperature"] = hourly_apparent_temperature
+hourly_data["hourly_precipitation"] = hourly_precipitation
+hourly_data["hourly_weather_code"] = hourly_weather_code
+hourly_data["hourly_relative_humidity_2m"] = hourly_relative_humidity_2m
 
 hourly_dataframe = pd.DataFrame(data = hourly_data)
 hourly_dataframe.to_csv("hourly_data_3months.csv", index=False)
@@ -67,15 +75,32 @@ daily = response.Daily()
 daily_temperature_2m_max = daily.Variables(0).ValuesAsNumpy()
 daily_snowfall_sum = daily.Variables(1).ValuesAsNumpy()
 
-daily_data = {"date": pd.date_range(
-	start = pd.to_datetime(daily.Time(), unit = "s", utc = True),
-	end = pd.to_datetime(daily.TimeEnd(), unit = "s", utc = True),
-	freq = pd.Timedelta(seconds = daily.Interval()),
-	inclusive = "left"
-).strftime('%Y-%m-%d %H:%M')}
+daily_data = {
+	"date": pd.date_range(
+		start=pd.to_datetime(daily.Time(), unit="s", utc=True),
+		end=pd.to_datetime(daily.TimeEnd(), unit="s", utc=True),
+		freq=pd.Timedelta(seconds=daily.Interval()),
+		inclusive="left"
+	).strftime('%Y-%m-%d'),
+	"time": pd.Series(["00:00"] * len(daily_temperature_2m_max))  # Assuming daily data is at midnight
+}
 
-daily_data["temperature_2m_max"] = daily_temperature_2m_max
-daily_data["snowfall_sum"] = daily_snowfall_sum
+daily_data["daily_temperature_2m_max"] = daily_temperature_2m_max
+daily_data["daily_snowfall_sum"] = daily_snowfall_sum
 
 daily_dataframe = pd.DataFrame(data = daily_data)
 daily_dataframe.to_csv("daily_data_3months.csv", index=False)
+
+# Create a new DataFrame for combined data where the hourly and daily data are combined
+combined_data = pd.DataFrame()
+
+# Add hourly data to combined DataFrame
+combined_data = pd.concat([combined_data, hourly_dataframe], ignore_index=True)
+
+# Add daily data to combined DataFrame
+combined_data = pd.concat([combined_data, daily_dataframe], ignore_index=True)
+
+# Save the combined DataFrame to a CSV file
+combined_data.to_csv("combined_data_3months.csv", index=False)
+
+
