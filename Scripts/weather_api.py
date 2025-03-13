@@ -1,70 +1,81 @@
 import openmeteo_requests
-import requests
+
+import requests_cache
 import pandas as pd
-import json
-from datetime import datetime, timedelta
+from retry_requests import retry
 
-# Setup the Open-Meteo API client
-openmeteo = openmeteo_requests.Client()
+# Setup the Open-Meteo API client with cache and retry on error
+cache_session = requests_cache.CachedSession('.cache', expire_after = 3600)
+retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
+openmeteo = openmeteo_requests.Client(session = retry_session)
 
-# API configuration
-url = "https://archive-api.open-meteo.com/v1/archive"
+# Make sure all required weather variables are listed here
+# The order of variables in hourly or daily is important to assign them correctly below
+url = "https://api.open-meteo.com/v1/forecast"
 params = {
-    "latitude": 33.749,
-    "longitude": -84.388,
-    "start_date": "2025-02-04",
-    "end_date": "2025-02-18",
-    "hourly": "temperature_2m",
-    "timezone": "America/New_York"
+	"latitude": 33.749,
+	"longitude": -84.388,
+	"daily": ["temperature_2m_max", "snowfall_sum"],
+	"hourly": ["temperature_2m", "apparent_temperature", "precipitation", "weather_code", "relative_humidity_2m"],
+	"current": "showers",
+	"timezone": "America/New_York",
+	"past_days": 92,
+	"forecast_days": 16
 }
-
-# Make API request
 responses = openmeteo.weather_api(url, params=params)
-response = responses[0]
 
-# Process hourly data
+# Process first location. Add a for-loop for multiple locations or weather models
+response = responses[0]
+print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
+print(f"Elevation {response.Elevation()} m asl")
+print(f"Timezone {response.Timezone()}{response.TimezoneAbbreviation()}")
+print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
+
+							
+# Current values. The order of variables needs to be the same as requested.
+current = response.Current()
+current_showers = current.Variables(0).Value()
+
+print(f"Current time {current.Time()}")
+print(f"Current showers {current_showers}")
+							# Process hourly data. The order of variables needs to be the same as requested.
 hourly = response.Hourly()
 hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
+hourly_apparent_temperature = hourly.Variables(1).ValuesAsNumpy()
+hourly_precipitation = hourly.Variables(2).ValuesAsNumpy()
+hourly_weather_code = hourly.Variables(3).ValuesAsNumpy()
+hourly_relative_humidity_2m = hourly.Variables(4).ValuesAsNumpy()
 
-# Create datetime range
-hourly_data = {
-    "date": pd.date_range(
-        start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
-        end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
-        freq=pd.Timedelta(seconds=hourly.Interval()),
-        inclusive="left"
-    )
-}
+hourly_data = {"date": pd.date_range(
+	start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
+	end = pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True),
+	freq = pd.Timedelta(seconds = hourly.Interval()),
+	inclusive = "left"
+)}
+
 hourly_data["temperature_2m"] = hourly_temperature_2m
+hourly_data["apparent_temperature"] = hourly_apparent_temperature
+hourly_data["precipitation"] = hourly_precipitation
+hourly_data["weather_code"] = hourly_weather_code
+hourly_data["relative_humidity_2m"] = hourly_relative_humidity_2m
 
-# Create dataframe
-hourly_dataframe = pd.DataFrame(data=hourly_data)
+hourly_dataframe = pd.DataFrame(data = hourly_data)
+hourly_dataframe.to_csv("hourly_data.csv", index=False)
 
-# Save as CSV
-start_date = params['start_date'].replace('-', '')
-end_date = params['end_date'].replace('-', '')
-csv_filename = f'weather_data_{start_date}_{end_date}.csv'
-hourly_dataframe.to_csv(csv_filename, index=False)
+							# Process daily data. The order of variables needs to be the same as requested.
+daily = response.Daily()
+daily_temperature_2m_max = daily.Variables(0).ValuesAsNumpy()
+daily_snowfall_sum = daily.Variables(1).ValuesAsNumpy()
 
-# Convert to JSON and save
-# weather_data = {
-#     "coordinates": {
-#         "latitude": response.Latitude(),
-#         "longitude": response.Longitude()
-#     },
-#     "timezone": {
-#         "name": response.Timezone(),
-#         "abbreviation": response.TimezoneAbbreviation()
-#     },
-#     "hourly_data": hourly_dataframe.to_dict(orient='records')
-# }
+daily_data = {"date": pd.date_range(
+	start = pd.to_datetime(daily.Time(), unit = "s", utc = True),
+	end = pd.to_datetime(daily.TimeEnd(), unit = "s", utc = True),
+	freq = pd.Timedelta(seconds = daily.Interval()),
+	inclusive = "left"
+)}
 
-# # Save JSON
-# with open('weather_data.json', 'w') as f:
-#     json.dump(weather_data, f, indent=4)
+daily_data["temperature_2m_max"] = daily_temperature_2m_max
+daily_data["snowfall_sum"] = daily_snowfall_sum
 
-print(f"File saved: weather_data.csv")
-print(f"\nCoordinates: {response.Latitude()}°N {response.Longitude()}°E")
-print(f"Timezone: {response.Timezone()} {response.TimezoneAbbreviation()}")
-print("\nHourly Temperature Data:")
-print(hourly_dataframe)
+daily_dataframe = pd.DataFrame(data = daily_data)
+daily_dataframe.to_csv("daily_data.csv", index=False)
