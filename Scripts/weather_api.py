@@ -51,7 +51,7 @@ hourly_data = {"date": pd.date_range(
 	end = pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True),
 	freq = pd.Timedelta(seconds = hourly.Interval()),
 	inclusive = "left"
-)}
+).strftime('%Y-%m-%d %H:%M')}
 
 hourly_data["temperature_2m"] = hourly_temperature_2m
 hourly_data["apparent_temperature"] = hourly_apparent_temperature
@@ -60,9 +60,9 @@ hourly_data["weather_code"] = hourly_weather_code
 hourly_data["relative_humidity_2m"] = hourly_relative_humidity_2m
 
 hourly_dataframe = pd.DataFrame(data = hourly_data)
-hourly_dataframe.to_csv("hourly_data.csv", index=False)
+hourly_dataframe.to_csv("hourly_data_3months.csv", index=False)
 
-							# Process daily data. The order of variables needs to be the same as requested.
+# Process daily data. The order of variables needs to be the same as requested.
 daily = response.Daily()
 daily_temperature_2m_max = daily.Variables(0).ValuesAsNumpy()
 daily_snowfall_sum = daily.Variables(1).ValuesAsNumpy()
@@ -72,10 +72,10 @@ daily_data = {"date": pd.date_range(
 	end = pd.to_datetime(daily.TimeEnd(), unit = "s", utc = True),
 	freq = pd.Timedelta(seconds = daily.Interval()),
 	inclusive = "left"
-)}
+).strftime('%Y-%m-%d %H:%M')}
 
 daily_data["temperature_2m_max"] = daily_temperature_2m_max
 daily_data["snowfall_sum"] = daily_snowfall_sum
 
 daily_dataframe = pd.DataFrame(data = daily_data)
-daily_dataframe.to_csv("daily_data.csv", index=False)
+daily_dataframe.to_csv("daily_data_3months.csv", index=False)
