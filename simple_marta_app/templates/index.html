@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +6,8 @@
     <title>Simple MARTA Transit Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Leaflet CSS for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
     <div class="container mt-5">
@@ -64,7 +65,15 @@
                                 <div id="busMapContent" class="text-center p-3">
                                     <h3>Bus Positions</h3>
                                     <p>Showing latest bus positions</p>
+                                    
+                                    <!-- Bus Map Container -->
+                                    <div class="marta-map-container mb-4">
+                                        <div id="busPositionsMap" class="map-container"></div>
+                                    </div>
+                                    
+                                    <h4 class="mt-4">Bus Details</h4>
                                     <div id="busPositions" class="row"></div>
+                                    
                                     <h4 class="mt-4">Recent Trip Updates</h4>
                                     <div id="busTripUpdates" class="row"></div>
                                 </div>
@@ -104,6 +113,9 @@
         </div>
     </div>
 
+    <!-- Leaflet JS for maps -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
     <script>
         // Map of MARTA train stations and their coordinates on the map image
         // These are estimated positions based on the map image proportion
@@ -156,6 +168,25 @@
             'KENSINGTON': { top: 72, left: 104, line: 'BLUE' },
             'INDIAN CREEK': { top: 72, left: 111, line: 'BLUE' }
         };
+
+        // Create the bus map using Leaflet
+        const busMap = L.map('busPositionsMap', {
+            minZoom: 9,
+            maxZoom: 14
+        }).setView([33.749, -84.388], 10);
+        let busMarkers = [];
+        
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(busMap);
+
+        // Set bounds for Atlanta metro area
+        const atlantaBounds = L.latLngBounds(
+            L.latLng(33.578, -84.631), // Southwest corner
+            L.latLng(33.937, -84.125)  // Northeast corner
+        );
+        busMap.setMaxBounds(atlantaBounds.pad(0.1));
 
         // Simplified data fetching without complex libraries
         async function fetchData(endpoint) {
@@ -255,25 +286,80 @@
             const busPositionsDiv = document.getElementById('busPositions');
             busPositionsDiv.innerHTML = '';
             
+            // Clear previous bus markers from the map
+            busMarkers.forEach(marker => busMap.removeLayer(marker));
+            busMarkers = [];
+            
             if (busData && busData.entity && busData.entity.length > 0) {
-                // Show up to 6 buses
+                // Show all buses on the map
+                busData.entity.forEach(entity => {
+                    const bus = entity.vehicle;
+                    if (bus && bus.position) {
+                        // Only create markers for buses within Atlanta bounds
+                        const busLatLng = L.latLng(bus.position.latitude, bus.position.longitude);
+                        if (atlantaBounds.contains(busLatLng)) {
+                            // Create a marker for the bus
+                            const routeId = bus.trip?.routeId || 'Unknown';
+                            const busLabel = bus.vehicle?.label || 'Unknown';
+                            
+                            const marker = L.marker(busLatLng);
+                            marker.bindPopup(`
+                                <strong>Bus ${busLabel}</strong><br>
+                                Route: ${routeId}<br>
+                                Position: ${bus.position.latitude.toFixed(4)}, ${bus.position.longitude.toFixed(4)}
+                            `);
+                            marker.addTo(busMap);
+                            busMarkers.push(marker);
+                        }
+                    }
+                });
+                
+                // If we have buses on the map, adjust the view to show all of them
+                if (busMarkers.length > 0) {
+                    // Create a feature group for buses within Atlanta bounds
+                    const validMarkers = busMarkers.filter(marker => {
+                        const latlng = marker.getLatLng();
+                        return atlantaBounds.contains(latlng);
+                    });
+                    
+                    if (validMarkers.length > 0) {
+                        const group = new L.featureGroup(validMarkers);
+                        busMap.fitBounds(group.getBounds().pad(0.1));
+                    } else {
+                        // If no valid markers, reset to Atlanta center
+                        busMap.setView([33.749, -84.388], 10);
+                    }
+                }
+                
+                // Show up to 6 buses in detail cards
                 const maxBuses = Math.min(6, busData.entity.length);
-                for (let i = 0; i < maxBuses; i++) {
+                let busesShown = 0;
+                
+                for (let i = 0; i < busData.entity.length && busesShown < maxBuses; i++) {
                     const bus = busData.entity[i].vehicle;
                     if (bus && bus.position) {
-                        const busCard = document.createElement('div');
-                        busCard.className = 'col-md-4 mb-3';
-                        busCard.innerHTML = `
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Bus ${bus.vehicle?.label || 'Unknown'}</h5>
-                                    <p>Route: ${bus.trip?.routeId || 'Unknown'}</p>
-                                    <p>Position: ${bus.position.latitude.toFixed(4)}, ${bus.position.longitude.toFixed(4)}</p>
+                        // Only show buses within Atlanta bounds
+                        const busLatLng = L.latLng(bus.position.latitude, bus.position.longitude);
+                        if (atlantaBounds.contains(busLatLng)) {
+                            const busCard = document.createElement('div');
+                            busCard.className = 'col-md-4 mb-3';
+                            busCard.innerHTML = `
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Bus ${bus.vehicle?.label || 'Unknown'}</h5>
+                                        <p>Route: ${bus.trip?.routeId || 'Unknown'}</p>
+                                        <p>Position: ${bus.position.latitude.toFixed(4)}, ${bus.position.longitude.toFixed(4)}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        `;
-                        busPositionsDiv.appendChild(busCard);
+                            `;
+                            busPositionsDiv.appendChild(busCard);
+                            busesShown++;
+                        }
                     }
+                }
+                
+                if (busesShown === 0) {
+                    busPositionsDiv.innerHTML = '<p class="col-12 text-center">No bus position data available within Atlanta area</p>';
                 }
             } else {
                 busPositionsDiv.innerHTML = '<p class="col-12 text-center">No bus position data available</p>';
@@ -418,6 +504,8 @@
             document.getElementById('trainView').style.display = 'none';
             document.getElementById('showBuses').classList.add('active');
             document.getElementById('showTrains').classList.remove('active');
+            // Resize map after showing it (needed for proper rendering)
+            busMap.invalidateSize();
         });
 
         document.getElementById('showTrains').addEventListener('click', function() {

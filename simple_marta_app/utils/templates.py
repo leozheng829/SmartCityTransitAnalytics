@@ -15,6 +15,12 @@ def create_index_template():
     Create the index.html template file
     """
     template_path = os.path.join(TEMPLATES_DIR, 'index.html')
+    
+    # If the template already exists, don't overwrite it
+    if os.path.exists(template_path):
+        print(f"Template already exists at {template_path}")
+        return
+        
     os.makedirs(TEMPLATES_DIR, exist_ok=True)
     
     with open(template_path, 'w') as f:
@@ -27,6 +33,8 @@ def create_index_template():
     <title>Simple MARTA Transit Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Leaflet CSS for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
     <div class="container mt-5">
@@ -84,7 +92,15 @@ def create_index_template():
                                 <div id="busMapContent" class="text-center p-3">
                                     <h3>Bus Positions</h3>
                                     <p>Showing latest bus positions</p>
+                                    
+                                    <!-- Bus Map Container -->
+                                    <div class="marta-map-container mb-4">
+                                        <div id="busPositionsMap" class="map-container"></div>
+                                    </div>
+                                    
+                                    <h4 class="mt-4">Bus Details</h4>
                                     <div id="busPositions" class="row"></div>
+                                    
                                     <h4 class="mt-4">Recent Trip Updates</h4>
                                     <div id="busTripUpdates" class="row"></div>
                                 </div>
@@ -124,6 +140,9 @@ def create_index_template():
         </div>
     </div>
 
+    <!-- Leaflet JS for maps -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
     <script>
         // Map of MARTA train stations and their coordinates on the map image
         // These are estimated positions based on the map image proportion
@@ -176,6 +195,15 @@ def create_index_template():
             'KENSINGTON': { top: 72, left: 104, line: 'BLUE' },
             'INDIAN CREEK': { top: 72, left: 111, line: 'BLUE' }
         };
+
+        // Create the bus map using Leaflet
+        const busMap = L.map('busPositionsMap').setView([33.749, -84.388], 11);
+        let busMarkers = [];
+        
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(busMap);
 
         // Simplified data fetching without complex libraries
         async function fetchData(endpoint) {
@@ -275,8 +303,37 @@ def create_index_template():
             const busPositionsDiv = document.getElementById('busPositions');
             busPositionsDiv.innerHTML = '';
             
+            // Clear previous bus markers from the map
+            busMarkers.forEach(marker => busMap.removeLayer(marker));
+            busMarkers = [];
+            
             if (busData && busData.entity && busData.entity.length > 0) {
-                // Show up to 6 buses
+                // Show all buses on the map
+                busData.entity.forEach(entity => {
+                    const bus = entity.vehicle;
+                    if (bus && bus.position) {
+                        // Create a marker for the bus
+                        const routeId = bus.trip?.routeId || 'Unknown';
+                        const busLabel = bus.vehicle?.label || 'Unknown';
+                        
+                        const marker = L.marker([bus.position.latitude, bus.position.longitude]);
+                        marker.bindPopup(`
+                            <strong>Bus ${busLabel}</strong><br>
+                            Route: ${routeId}<br>
+                            Position: ${bus.position.latitude.toFixed(4)}, ${bus.position.longitude.toFixed(4)}
+                        `);
+                        marker.addTo(busMap);
+                        busMarkers.push(marker);
+                    }
+                });
+                
+                // If we have buses on the map, adjust the view to show all of them
+                if (busMarkers.length > 0) {
+                    const group = new L.featureGroup(busMarkers);
+                    busMap.fitBounds(group.getBounds().pad(0.1));
+                }
+                
+                // Show up to 6 buses in detail cards
                 const maxBuses = Math.min(6, busData.entity.length);
                 for (let i = 0; i < maxBuses; i++) {
                     const bus = busData.entity[i].vehicle;
@@ -438,6 +495,8 @@ def create_index_template():
             document.getElementById('trainView').style.display = 'none';
             document.getElementById('showBuses').classList.add('active');
             document.getElementById('showTrains').classList.remove('active');
+            // Resize map after showing it (needed for proper rendering)
+            busMap.invalidateSize();
         });
 
         document.getElementById('showTrains').addEventListener('click', function() {
@@ -527,6 +586,14 @@ body {
 }
 
 .marta-map {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+/* Bus map styles */
+.map-container {
+    height: 400px;
     width: 100%;
     border-radius: 8px;
     border: 1px solid #ddd;
