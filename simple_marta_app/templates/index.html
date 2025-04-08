@@ -183,8 +183,8 @@
 
         // Set bounds for Atlanta metro area
         const atlantaBounds = L.latLngBounds(
-            L.latLng(33.578, -84.631), // Southwest corner
-            L.latLng(33.937, -84.125)  // Northeast corner
+            L.latLng(33.400, -84.950), // Southwest corner - expanded
+            L.latLng(34.200, -83.900)  // Northeast corner - expanded
         );
         busMap.setMaxBounds(atlantaBounds.pad(0.1));
 
