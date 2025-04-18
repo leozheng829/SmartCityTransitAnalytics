@@ -47,3 +47,4 @@ Collected Data/*.json
 !Collected Data/train_data_20250324_211034.json
 bus_positions.json
 bus_tripupdates.json 
+marta_transit_dashboard/cache/train_data.json
