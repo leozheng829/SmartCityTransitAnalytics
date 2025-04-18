@@ -7,7 +7,9 @@ A modular Flask application for displaying MARTA (Metropolitan Atlanta Rapid Tra
 - Live display of MARTA train arrivals and bus positions via official MARTA APIs
 - Real-time bus trip updates and arrival predictions
 - Real-time Atlanta weather information via Open-Meteo API
-- Interactive MARTA train map with train position indicators
+- **Interactive MARTA train and bus maps using Leaflet**
+- **Station-based filtering to show trains arriving at selected stations**
+- **Train lines displayed with proper colors and real GPS coordinates**
 - Visual status indicators for transit delays
 - Transit system status updates
 
@@ -20,8 +22,7 @@ simple_marta_app/
 ├── config/             # Configuration settings
 │   └── config.py       # App configuration
 ├── static/             # Static files (CSS, images)
-│   ├── style.css       # Application styles
-│   └── marta_train_map.jpg # MARTA train map image
+│   └── style.css       # Application styles
 ├── templates/          # HTML templates
 │   └── index.html      # Main application template
 ├── utils/              # Utility modules
@@ -44,7 +45,7 @@ simple_marta_app/
 - Requests
 - Open-Meteo weather API packages
 - Google Protobuf (for GTFS-RT bus data)
-- Pillow (for map image processing)
+- Leaflet.js (for interactive maps)
 
 ## Installation
 
@@ -75,13 +76,28 @@ http://localhost:5000
 - `/api/status` - System-wide transit status
 - `/api/updates` - Recent service updates
 
+## Interactive Maps
+
+### Bus Map
+- Shows real-time positions of MARTA buses within the Atlanta metropolitan area
+- Bus markers are clickable and display route, bus ID, and position information
+- Map automatically adjusts to show all currently operating buses
+- Configurable bounds to focus on the greater Atlanta area
+
+### Train Map
+- Interactive map showing all MARTA train stations with their actual GPS coordinates
+- Color-coded train lines (Red, Gold, Blue, Green)
+- Trains appear as colored circles at their current station
+- Click on stations to filter and show only trains arriving at that station
+- "Show All Trains" button to clear station filters
+
 ## Data Sources
 
 - **Weather**: Open-Meteo API for real-time Atlanta weather data
 - **MARTA Train API**: Official MARTA API for real-time train data
 - **Bus Positions**: MARTA GTFS-RT vehicle positions feed
 - **Bus Trip Updates**: MARTA GTFS-RT trip updates feed
-- **Map**: Static MARTA system map with dynamically positioned train indicators
+- **Map**: Leaflet.js with OpenStreetMap tiles for interactive mapping
 
 ## Fallback Mechanism
 
