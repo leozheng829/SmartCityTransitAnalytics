@@ -10,7 +10,6 @@ A modular Flask application for displaying MARTA (Metropolitan Atlanta Rapid Tra
 - Interactive MARTA train map with train position indicators
 - Visual status indicators for transit delays
 - Transit system status updates
-- No Mapbox dependency - uses a static map image
 
 ## Project Structure
 

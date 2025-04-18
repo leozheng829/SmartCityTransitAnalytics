@@ -1,5 +1,6 @@
 body {
-    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
 }
 
 .card {
@@ -21,23 +22,22 @@ body {
 
 .marta-map-container {
     position: relative;
-    width: 100%;
-    max-width: 800px;
     margin: 0 auto;
+    max-width: 100%;
 }
 
 .marta-map {
     width: 100%;
-    border-radius: 8px;
-    border: 1px solid #ddd;
+    height: auto;
+    border-radius: 0.25rem;
 }
 
 /* Bus map styles */
 .map-container {
-    height: 400px;
+    height: 500px;
     width: 100%;
-    border-radius: 8px;
-    border: 1px solid #ddd;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .train-indicator {
@@ -126,5 +126,164 @@ body {
 
 .text-danger {
     color: #dc3545 !important;
+}
+
+/* Main app styles */
+body {
+    background-color: #f8f9fa;
+}
+
+/* MARTA Station and Train styles */
+.train-icon {
+    z-index: 1000;
+}
+
+.leaflet-tooltip {
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+/* Button Styles */
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .map-container {
+        height: 350px;
+    }
+}
+
+/* Station popup styles */
+.station-popup {
+    min-width: 240px;
+    max-width: 320px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.station-popup h5 {
+    margin-bottom: 12px;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 8px;
+    text-align: center;
+    font-weight: 600;
+    color: #333;
+}
+
+.station-lines {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #eaeaea;
+}
+
+.station-lines .badge {
+    margin: 0 3px;
+    padding: 6px 10px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+}
+
+.train-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.train-item {
+    border-radius: 8px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    overflow: hidden;
+    transition: transform 0.2s;
+    border: none;
+}
+
+.train-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+}
+
+.train-header {
+    border-radius: 0 !important;
+    font-weight: 600;
+    padding: 6px 10px !important;
+    font-size: 0.9rem !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.train-details {
+    font-size: 0.9rem !important;
+    line-height: 1.4;
+    padding: 8px 10px !important;
+    background-color: #f8f9fa;
+}
+
+.train-details div {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.train-details div:last-child {
+    margin-bottom: 0;
+}
+
+.train-details strong {
+    color: #555;
+}
+
+.leaflet-popup-content {
+    margin: 13px 15px;
+    width: auto !important;
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.leaflet-popup-tip {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+/* Status indicators for waiting times */
+.arrival-time {
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: white;
+}
+
+.arrival-now {
+    background-color: #28a745;
+}
+
+.arrival-soon {
+    background-color: #17a2b8;
+}
+
+.arrival-approaching {
+    background-color: #fd7e14;
+}
+
+.arrival-waiting {
+    background-color: #6c757d;
 }
         

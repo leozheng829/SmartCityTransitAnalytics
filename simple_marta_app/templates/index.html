@@ -84,8 +84,7 @@
                                     <h3>MARTA Train Map</h3>
                                     <p>Showing latest train positions</p>
                                     <div class="marta-map-container">
-                                        <img src="{{ url_for('static', filename='marta_train_map.jpg') }}" alt="MARTA Train Map" class="img-fluid marta-map">
-                                        <div id="train-indicators"></div>
+                                        <div id="trainPositionsMap" class="map-container"></div>
                                     </div>
                                     <div id="trainPositions" class="row mt-4"></div>
                                 </div>
@@ -188,6 +187,22 @@
         );
         busMap.setMaxBounds(atlantaBounds.pad(0.1));
 
+        // Create train map using Leaflet
+        const trainMap = L.map('trainPositionsMap', {
+            minZoom: 10,
+            maxZoom: 14
+        }).setView([33.749, -84.388], 11);
+        let trainStationMarkers = {};
+        let trainMarkers = [];
+        
+        // Add OpenStreetMap tile layer to train map
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(trainMap);
+        
+        // Train map also uses Atlanta bounds
+        trainMap.setMaxBounds(atlantaBounds.pad(0.1));
+        
         // Simplified data fetching without complex libraries
         async function fetchData(endpoint) {
             try {
@@ -200,6 +215,292 @@
                 console.error(`Error fetching ${endpoint}:`, error);
                 return null;
             }
+        }
+        
+        // MARTA train station coordinates (actual GPS coordinates)
+        const trainStations = {
+            // Red Line stations (North-South)
+            'NORTH SPRINGS': { lat: 33.9455, lng: -84.3561, lines: ['RED'] },
+            'SANDY SPRINGS': { lat: 33.9321, lng: -84.3513, lines: ['RED'] },
+            'DUNWOODY': { lat: 33.9212, lng: -84.3437, lines: ['RED'] },
+            'MEDICAL CENTER': { lat: 33.9103, lng: -84.3515, lines: ['RED'] },
+            'BUCKHEAD': { lat: 33.8465, lng: -84.3671, lines: ['RED'] },
+            
+            // Gold Line stations (North-South)
+            'DORAVILLE': { lat: 33.9028, lng: -84.2799, lines: ['GOLD'] },
+            'CHAMBLEE': { lat: 33.8879, lng: -84.3062, lines: ['GOLD'] },
+            'BROOKHAVEN': { lat: 33.8600, lng: -84.3390, lines: ['GOLD'] },
+            'LENOX': { lat: 33.8465, lng: -84.3566, lines: ['GOLD'] },
+            
+            // Shared stations for Red and Gold
+            'LINDBERGH CENTER': { lat: 33.8231, lng: -84.3692, lines: ['RED', 'GOLD'] },
+            'ARTS CENTER': { lat: 33.7893, lng: -84.3871, lines: ['RED', 'GOLD'] },
+            'MIDTOWN': { lat: 33.7812, lng: -84.3862, lines: ['RED', 'GOLD'] },
+            'NORTH AVENUE': { lat: 33.7712, lng: -84.3869, lines: ['RED', 'GOLD'] },
+            'CIVIC CENTER': { lat: 33.7663, lng: -84.3872, lines: ['RED', 'GOLD'] },
+            'PEACHTREE CENTER': { lat: 33.7590, lng: -84.3876, lines: ['RED', 'GOLD'] },
+            'FIVE POINTS': { lat: 33.7542, lng: -84.3919, lines: ['RED', 'GOLD', 'GREEN', 'BLUE'] },
+            'GARNETT': { lat: 33.7480, lng: -84.3952, lines: ['RED', 'GOLD'] },
+            'WEST END': { lat: 33.7352, lng: -84.4132, lines: ['RED', 'GOLD'] },
+            'OAKLAND CITY': { lat: 33.7163, lng: -84.4255, lines: ['RED', 'GOLD'] },
+            'LAKEWOOD': { lat: 33.7002, lng: -84.4297, lines: ['RED', 'GOLD'] },
+            'EAST POINT': { lat: 33.6768, lng: -84.4408, lines: ['RED', 'GOLD'] },
+            'COLLEGE PARK': { lat: 33.6513, lng: -84.4488, lines: ['RED', 'GOLD'] },
+            'AIRPORT': { lat: 33.6407, lng: -84.4444, lines: ['RED', 'GOLD'] },
+            
+            // Green Line stations (East-West)
+            'BANKHEAD': { lat: 33.7723, lng: -84.4289, lines: ['GREEN'] },
+            
+            // Blue Line stations (East-West)
+            'INDIAN CREEK': { lat: 33.7699, lng: -84.2291, lines: ['BLUE'] },
+            'KENSINGTON': { lat: 33.7720, lng: -84.2499, lines: ['BLUE'] },
+            'AVONDALE': { lat: 33.7753, lng: -84.2808, lines: ['BLUE'] },
+            'DECATUR': { lat: 33.7748, lng: -84.2952, lines: ['BLUE'] },
+            'EAST LAKE': { lat: 33.7650, lng: -84.3121, lines: ['BLUE'] },
+            
+            // Shared Green and Blue Line stations (East-West)
+            'INMAN PARK': { lat: 33.7570, lng: -84.3524, lines: ['GREEN', 'BLUE'] },
+            'KING MEMORIAL': { lat: 33.7501, lng: -84.3755, lines: ['GREEN', 'BLUE'] },
+            'GEORGIA STATE': { lat: 33.7502, lng: -84.3863, lines: ['GREEN', 'BLUE'] },
+            'OMNI': { lat: 33.7592, lng: -84.3977, lines: ['GREEN', 'BLUE'] },
+            'VINE CITY': { lat: 33.7563, lng: -84.4044, lines: ['GREEN', 'BLUE'] },
+            'ASHBY': { lat: 33.7562, lng: -84.4170, lines: ['GREEN', 'BLUE'] }
+        };
+        
+        // Line colors
+        const lineColors = {
+            'RED': '#CE0E2D',
+            'GOLD': '#FFA500',
+            'BLUE': '#0000FF',
+            'GREEN': '#008000'
+        };
+        
+        // Initialize the train map with stations and route lines
+        function initializeTrainMap() {
+            // First add route lines
+            addTrainRouteLines();
+            
+            // Then add station markers
+            for (const [stationName, stationData] of Object.entries(trainStations)) {
+                // Create marker for the station
+                const marker = L.circleMarker([stationData.lat, stationData.lng], {
+                    radius: 6,
+                    fillColor: '#FFFFFF',
+                    color: '#000000',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 1
+                });
+                
+                // Add tooltip with station name (shown on hover)
+                marker.bindTooltip(stationName, {
+                    permanent: false,
+                    direction: 'top'
+                });
+                
+                // Add popup with station info (shown on click)
+                marker.bindPopup(`<div class="station-popup"><h5>${stationName}</h5><div class="station-trains">Loading schedule...</div></div>`);
+                
+                // When popup opens, fetch train data for this station
+                marker.on('click', async function() {
+                    updateStationPopup(marker, stationName);
+                });
+                
+                marker.addTo(trainMap);
+                trainStationMarkers[stationName] = marker;
+            }
+        }
+        
+        // Update station popup with train arrival information
+        async function updateStationPopup(marker, stationName) {
+            // Get the popup content element
+            const popup = marker.getPopup();
+            const popupContent = popup.getContent();
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = popupContent;
+            const trainsDiv = tempDiv.querySelector('.station-trains');
+            
+            // Get all train data
+            const trainData = await fetchData('trains');
+            
+            if (trainData && trainData.length > 0) {
+                // Debug output - add this to see all available trains
+                console.log(`Checking for trains at ${stationName}`);
+                const availableStations = new Set(trainData.map(train => train.STATION));
+                console.log("Available stations in API data:", [...availableStations]);
+                
+                // Filter trains arriving at this station - handle different naming conventions
+                const stationTrains = trainData.filter(train => {
+                    // Check for exact match
+                    if (train.STATION === stationName) return true;
+                    
+                    // Check for "STATION" suffix match
+                    if (train.STATION === stationName + " STATION") return true;
+                    
+                    // Handle case where our data has STATION and API doesn't
+                    if (stationName.includes("STATION") && train.STATION === stationName.replace(" STATION", "")) return true;
+                    
+                    // Handle different capitalizations
+                    if (train.STATION.toUpperCase() === stationName.toUpperCase()) return true;
+                    
+                    // Try to normalize station names by removing "STATION" and comparing
+                    const normalizedTrainStation = train.STATION.replace(" STATION", "").trim().toUpperCase();
+                    const normalizedMapStation = stationName.replace(" STATION", "").trim().toUpperCase();
+                    return normalizedTrainStation === normalizedMapStation;
+                });
+                
+                // Log matched trains
+                console.log(`Found ${stationTrains.length} trains for ${stationName}:`, stationTrains);
+                
+                if (stationTrains.length > 0) {
+                    // Sort by arrival time
+                    stationTrains.sort((a, b) => {
+                        const timeA = a.WAITING_TIME.includes('min') 
+                            ? parseInt(a.WAITING_TIME) 
+                            : (a.WAITING_TIME === 'Arriving' ? 0 : 999);
+                        const timeB = b.WAITING_TIME.includes('min') 
+                            ? parseInt(b.WAITING_TIME) 
+                            : (b.WAITING_TIME === 'Arriving' ? 0 : 999);
+                        return timeA - timeB;
+                    });
+                    
+                    // Build the train list
+                    let trainsHTML = '<div class="train-list">';
+                    stationTrains.forEach(train => {
+                        // Determine line color class
+                        let colorClass = 'bg-secondary';
+                        if (train.LINE === 'RED') colorClass = 'bg-danger';
+                        if (train.LINE === 'GOLD') colorClass = 'bg-warning';
+                        if (train.LINE === 'BLUE') colorClass = 'bg-primary';
+                        if (train.LINE === 'GREEN') colorClass = 'bg-success';
+                        
+                        // Format arrival time with visual indicator
+                        let arrivalClass = 'arrival-waiting';
+                        if (train.WAITING_TIME === 'Arriving') {
+                            arrivalClass = 'arrival-now';
+                        } else if (train.WAITING_TIME.includes('min')) {
+                            const minutes = parseInt(train.WAITING_TIME);
+                            if (minutes <= 2) {
+                                arrivalClass = 'arrival-soon';
+                            } else if (minutes <= 5) {
+                                arrivalClass = 'arrival-approaching';
+                            }
+                        }
+                        
+                        trainsHTML += `
+                            <div class="train-item">
+                                <div class="train-header ${colorClass} text-white">
+                                    <span>${train.LINE} Line</span>
+                                    <span>Train ${train.TRAIN_ID}</span>
+                                </div>
+                                <div class="train-details">
+                                    <div>
+                                        <strong>Arrival:</strong>
+                                        <span class="arrival-time ${arrivalClass}">${train.WAITING_TIME}</span>
+                                    </div>
+                                    <div>
+                                        <strong>Destination:</strong>
+                                        <span>${train.DESTINATION}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    trainsHTML += '</div>';
+                    
+                    trainsDiv.innerHTML = trainsHTML;
+                } else {
+                    trainsDiv.innerHTML = '<p class="small text-muted text-center py-2">No trains currently approaching this station.</p>';
+                }
+            } else {
+                trainsDiv.innerHTML = '<p class="small text-muted text-center py-2">Unable to load train schedule data.</p>';
+            }
+            
+            // Add line information
+            const lines = trainStations[stationName].lines;
+            const lineLabels = lines.map(line => {
+                let colorClass = 'bg-secondary';
+                if (line === 'RED') colorClass = 'bg-danger';
+                if (line === 'GOLD') colorClass = 'bg-warning';
+                if (line === 'BLUE') colorClass = 'bg-primary';
+                if (line === 'GREEN') colorClass = 'bg-success';
+                
+                return `<span class="badge ${colorClass}">${line}</span>`;
+            }).join('');
+            
+            trainsDiv.innerHTML = `<div class="station-lines">${lineLabels}</div>` + trainsDiv.innerHTML;
+            
+            // Update the popup content
+            popup.setContent(tempDiv.innerHTML);
+            popup.update();
+        }
+        
+        // Add train route lines to the map
+        function addTrainRouteLines() {
+            // Red Line (North Springs to Airport)
+            const redLineStations = [
+                'NORTH SPRINGS', 'SANDY SPRINGS', 'DUNWOODY', 'MEDICAL CENTER', 'BUCKHEAD', 
+                'LINDBERGH CENTER', 'ARTS CENTER', 'MIDTOWN', 'NORTH AVENUE', 'CIVIC CENTER', 
+                'PEACHTREE CENTER', 'FIVE POINTS', 'GARNETT', 'WEST END', 'OAKLAND CITY', 
+                'LAKEWOOD', 'EAST POINT', 'COLLEGE PARK', 'AIRPORT'
+            ];
+            
+            // Gold Line (Doraville to Airport)
+            const goldLineStations = [
+                'DORAVILLE', 'CHAMBLEE', 'BROOKHAVEN', 'LENOX', 'LINDBERGH CENTER', 
+                'ARTS CENTER', 'MIDTOWN', 'NORTH AVENUE', 'CIVIC CENTER', 'PEACHTREE CENTER', 
+                'FIVE POINTS', 'GARNETT', 'WEST END', 'OAKLAND CITY', 'LAKEWOOD', 'EAST POINT', 
+                'COLLEGE PARK', 'AIRPORT'
+            ];
+            
+            // Green Line (Bankhead to Edgewood-Candler Park)
+            const greenLineStations = [
+                'BANKHEAD', 'ASHBY', 'VINE CITY', 'OMNI', 'FIVE POINTS', 'GEORGIA STATE', 
+                'KING MEMORIAL', 'INMAN PARK'
+            ];
+            
+            // Blue Line (Indian Creek to Hamilton E. Holmes)
+            const blueLineStations = [
+                'INDIAN CREEK', 'KENSINGTON', 'AVONDALE', 'DECATUR', 'EAST LAKE', 'INMAN PARK', 
+                'KING MEMORIAL', 'GEORGIA STATE', 'FIVE POINTS', 'OMNI', 'VINE CITY', 'ASHBY'
+            ];
+            
+            drawRouteLine(redLineStations, lineColors.RED, 5);
+            drawRouteLine(goldLineStations, lineColors.GOLD, 5);
+            drawRouteLine(greenLineStations, lineColors.GREEN, 5);
+            drawRouteLine(blueLineStations, lineColors.BLUE, 5);
+        }
+        
+        // Draw a train route line on the map
+        function drawRouteLine(stationNames, color, weight) {
+            const coordinates = stationNames.map(name => {
+                if (trainStations[name]) {
+                    return [trainStations[name].lat, trainStations[name].lng];
+                }
+                return null;
+            }).filter(coord => coord !== null);
+            
+            if (coordinates.length >= 2) {
+                const polyline = L.polyline(coordinates, {
+                    color: color,
+                    weight: weight,
+                    opacity: 0.7
+                });
+                
+                polyline.addTo(trainMap);
+            }
+        }
+        
+        // Custom icon for trains based on line color
+        function createTrainIcon(line) {
+            const color = lineColors[line] || '#999999';
+            
+            return L.divIcon({
+                className: 'train-icon',
+                html: `<div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white;"></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
         }
 
         // Update the UI with fetched data
@@ -416,49 +717,124 @@
             // Update train positions view
             const trainData = await fetchData('trains');
             const trainPositionsDiv = document.getElementById('trainPositions');
-            const trainIndicatorsDiv = document.getElementById('train-indicators');
             
             trainPositionsDiv.innerHTML = '';
-            trainIndicatorsDiv.innerHTML = '';
+            
+            // Clear previous train markers
+            trainMarkers.forEach(marker => trainMap.removeLayer(marker));
+            trainMarkers = [];
+            
+            // Reset station colors
+            for (const station in trainStationMarkers) {
+                trainStationMarkers[station].setStyle({
+                    fillColor: '#FFFFFF'
+                });
+            }
             
             if (trainData && trainData.length > 0) {
-                // Clear previous train indicators
-                trainIndicatorsDiv.innerHTML = '';
-                
-                // Create train indicators on the map
+                // Create train markers on the map
                 trainData.forEach(train => {
                     const station = train.STATION;
-                    if (station && stationPositions[station]) {
-                        // Create train indicator
-                        const indicator = document.createElement('div');
-                        indicator.className = 'train-indicator';
+                    if (station) {
+                        // Find the matching station in our data
+                        let matchedStationName = null;
                         
-                        // Set position based on the station
-                        indicator.style.top = `${stationPositions[station].top}%`;
-                        indicator.style.left = `${stationPositions[station].left}%`;
+                        // Try different matching approaches
+                        for (const [stationName, stationData] of Object.entries(trainStations)) {
+                            // Direct match
+                            if (station === stationName) {
+                                matchedStationName = stationName;
+                                break;
+                            }
+                            
+                            // Check for "STATION" suffix match
+                            if (station === stationName + " STATION") {
+                                matchedStationName = stationName;
+                                break;
+                            }
+                            
+                            // Handle case where our data has STATION and API doesn't
+                            if (stationName.includes("STATION") && station === stationName.replace(" STATION", "")) {
+                                matchedStationName = stationName;
+                                break;
+                            }
+                            
+                            // Try to normalize station names
+                            const normalizedTrainStation = station.replace(" STATION", "").trim().toUpperCase();
+                            const normalizedMapStation = stationName.replace(" STATION", "").trim().toUpperCase();
+                            if (normalizedTrainStation === normalizedMapStation) {
+                                matchedStationName = stationName;
+                                break;
+                            }
+                        }
                         
-                        // Set color based on train line
-                        let colorClass = '';
-                        if (train.LINE === 'RED') colorClass = 'train-red';
-                        else if (train.LINE === 'GOLD') colorClass = 'train-gold';
-                        else if (train.LINE === 'BLUE') colorClass = 'train-blue';
-                        else if (train.LINE === 'GREEN') colorClass = 'train-green';
-                        
-                        indicator.classList.add(colorClass);
-                        
-                        // Add tooltip with train info
-                        const tooltip = document.createElement('div');
-                        tooltip.className = 'train-tooltip';
-                        tooltip.innerHTML = `
-                            <strong>Train ${train.TRAIN_ID}</strong><br>
-                            ${train.LINE} Line<br>
-                            Next: ${train.STATION}<br>
-                            To: ${train.DESTINATION}<br>
-                            Arriving: ${train.WAITING_TIME}
-                        `;
-                        
-                        indicator.appendChild(tooltip);
-                        trainIndicatorsDiv.appendChild(indicator);
+                        if (matchedStationName && trainStations[matchedStationName]) {
+                            // Get station coordinates
+                            const stationCoords = [trainStations[matchedStationName].lat, trainStations[matchedStationName].lng];
+                            
+                            // Create a marker for the train
+                            const trainIcon = createTrainIcon(train.LINE);
+                            const marker = L.marker(stationCoords, { icon: trainIcon });
+                            
+                            // Format arrival time with visual indicator
+                            let arrivalClass = 'arrival-waiting';
+                            if (train.WAITING_TIME === 'Arriving') {
+                                arrivalClass = 'arrival-now';
+                            } else if (train.WAITING_TIME.includes('min')) {
+                                const minutes = parseInt(train.WAITING_TIME);
+                                if (minutes <= 2) {
+                                    arrivalClass = 'arrival-soon';
+                                } else if (minutes <= 5) {
+                                    arrivalClass = 'arrival-approaching';
+                                }
+                            }
+                            
+                            // Determine line color class
+                            let colorClass = 'bg-secondary';
+                            if (train.LINE === 'RED') colorClass = 'bg-danger';
+                            if (train.LINE === 'GOLD') colorClass = 'bg-warning';
+                            if (train.LINE === 'BLUE') colorClass = 'bg-primary';
+                            if (train.LINE === 'GREEN') colorClass = 'bg-success';
+                            
+                            // Add popup with train info
+                            marker.bindPopup(`
+                                <div class="station-popup">
+                                    <h5>Train ${train.TRAIN_ID}</h5>
+                                    <div class="station-lines">
+                                        <span class="badge ${colorClass}">${train.LINE}</span>
+                                    </div>
+                                    <div class="train-item">
+                                        <div class="train-header ${colorClass} text-white">
+                                            <span>Route Info</span>
+                                        </div>
+                                        <div class="train-details">
+                                            <div>
+                                                <strong>Next Station:</strong>
+                                                <span>${train.STATION}</span>
+                                            </div>
+                                            <div>
+                                                <strong>Arrival:</strong>
+                                                <span class="arrival-time ${arrivalClass}">${train.WAITING_TIME}</span>
+                                            </div>
+                                            <div>
+                                                <strong>Destination:</strong>
+                                                <span>${train.DESTINATION}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `);
+                            
+                            marker.addTo(trainMap);
+                            trainMarkers.push(marker);
+                            
+                            // Highlight station with train
+                            if (trainStationMarkers[matchedStationName]) {
+                                trainStationMarkers[matchedStationName].setStyle({
+                                    fillColor: lineColors[train.LINE] || '#FFFFFF'
+                                });
+                            }
+                        }
                     }
                 });
                 
@@ -513,6 +889,12 @@
             document.getElementById('trainView').style.display = 'block';
             document.getElementById('showBuses').classList.remove('active');
             document.getElementById('showTrains').classList.add('active');
+            // Initialize train map if first time viewing
+            if (Object.keys(trainStationMarkers).length === 0) {
+                initializeTrainMap();
+            }
+            // Resize map after showing it (needed for proper rendering)
+            trainMap.invalidateSize();
         });
 
         // Handle refresh buttons
