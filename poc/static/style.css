@@ -1,0 +1,123 @@
+
+body {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.simple-map {
+    background-color: #eee;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 15px;
+}
+
+.marta-map-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.marta-map {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.train-indicator {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: #333;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    cursor: pointer;
+}
+
+.train-indicator:hover .train-tooltip {
+    display: block;
+}
+
+.train-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 100;
+    min-width: 150px;
+}
+
+.train-red {
+    background-color: #e51636;
+    box-shadow: 0 0 5px #e51636;
+}
+
+.train-gold {
+    background-color: #f9a825;
+    box-shadow: 0 0 5px #f9a825;
+}
+
+.train-blue {
+    background-color: #0d47a1;
+    box-shadow: 0 0 5px #0d47a1;
+}
+
+.train-green {
+    background-color: #388e3c;
+    box-shadow: 0 0 5px #388e3c;
+}
+
+.status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-on-time {
+    background-color: #28a745;
+}
+
+.status-delayed {
+    background-color: #ffc107;
+}
+
+.status-disrupted {
+    background-color: #dc3545;
+}
+
+#temperature, #busStatus, #trainStatus {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-warning {
+    color: #ffc107 !important;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+        
