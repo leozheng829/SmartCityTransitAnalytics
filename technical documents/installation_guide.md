@@ -14,7 +14,7 @@
 #### Option A: Clone from Git (if using version control)
 
 ```bash
-git clone https://github.com/yourusername/marta-transit-dashboard.git
+git clone https://github.com/leozheng829/SmartCityTransitAnalytics.git
 cd marta-transit-dashboard
 ```
 
@@ -23,7 +23,7 @@ cd marta-transit-dashboard
 ```bash
 # Extract the ZIP file
 unzip marta-transit-dashboard.zip
-cd marta-transit-dashboard
+cd marta_transit_dashboard
 ```
 
 ### 2. Set Up a Virtual Environment (Recommended)

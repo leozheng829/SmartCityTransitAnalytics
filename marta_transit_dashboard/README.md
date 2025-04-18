@@ -53,7 +53,7 @@ simple_marta_app/
 
 2. Install required packages:
 ```bash
-cd simple_marta_app
+cd marta_transit_dashboard
 pip install -r requirements.txt
 ```
 
