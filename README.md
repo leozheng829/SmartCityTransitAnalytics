@@ -10,6 +10,7 @@ A modular Flask application for displaying MARTA (Metropolitan Atlanta Rapid Tra
 - Interactive MARTA train map with train position indicators
 - Visual status indicators for transit delays
 - Transit system status updates
+- No Mapbox dependency - uses a static map image
 
 ## Project Structure
 
@@ -39,7 +40,7 @@ simple_marta_app/
 
 ## Requirements
 
-- Python 3.7+
+- Python
 - Flask
 - Requests
 - Open-Meteo weather API packages
@@ -58,12 +59,12 @@ pip install -r requirements.txt
 
 3. Run the application:
 ```bash
-python ../run.py
+python run.py
 ```
 
 4. Open your browser and navigate to:
 ```
-http://localhost:5000
+http://localhost:5001
 ```
 
 ## API Endpoints
