@@ -1,0 +1,45 @@
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Transit Map</h5>
+                <div class="btn-group mt-2">
+                    <button class="btn btn-sm btn-outline-primary active" id="showBuses">Bus View</button>
+                    <button class="btn btn-sm btn-outline-primary" id="showTrains">Train View</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="transitMap">
+                    <div id="busView" class="simple-map">
+                        <div id="busMapContent" class="text-center p-3">
+                            <h3>Bus Positions</h3>
+                            <p>Showing latest bus positions</p>
+                            
+                            <!-- Bus Map Container -->
+                            <div class="marta-map-container mb-4">
+                                <div id="busPositionsMap" class="map-container"></div>
+                            </div>
+                            
+                            <h4 class="mt-4">Bus Details</h4>
+                            <div id="busPositions" class="row"></div>
+                            
+                            <h4 class="mt-4">Recent Trip Updates</h4>
+                            <div id="busTripUpdates" class="row"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="trainView" class="simple-map" style="display:none;">
+                        <div id="trainMapContent" class="text-center p-3">
+                            <h3>MARTA Train Map</h3>
+                            <p>Showing latest train positions</p>
+                            <div class="marta-map-container">
+                                <div id="trainPositionsMap" class="map-container"></div>
+                            </div>
+                            <div id="trainPositions" class="row mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
