@@ -50,3 +50,4 @@ bus_tripupdates.json
 marta_transit_dashboard/cache/train_data.json
 simple_marta_app/cache/train_data.json
 **/cache/train_data.json
+marta_transit_dashboard/cache/
