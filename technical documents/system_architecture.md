@@ -16,21 +16,24 @@ The MARTA Transit Dashboard is a Flask-based web application that provides real-
 
 ### 1. Client Layer
 
-The client layer consists of the user's web browser which renders the HTML, CSS, and JavaScript content. Key components include:
+The client layer consists of the user's web browser which renders the HTML, CSS, and JavaScript content served by the Flask application. Key components include:
 
-- **Interactive Maps**: Implemented using Leaflet.js to show bus and train positions
-- **Status Cards**: Display bus and train system status
-- **Weather Information**: Shows current Atlanta weather
-- **Data Refresh**: Periodic AJAX calls to update data without page reloads
+- **HTML Structure**: Defined by `templates/base.html` and populated by partials like `_status_cards.html`, `_transit_map.html`, etc., rendered via Jinja2.
+- **Styling**: Handled by `static/css/style.css`.
+- **Client-Side Logic**: Contained within `static/js/dashboard.js`.
+  - **Interactive Maps**: Implemented using Leaflet.js (loaded via CDN) to show bus and train positions.
+  - **Data Fetching & Display**: Periodic AJAX calls (`fetchData` function) to the application's API endpoints to retrieve JSON data.
+  - **UI Updates**: Dynamically updates HTML elements (status cards, maps, update lists) based on fetched data.
 
 ### 2. Application Layer
 
-The application layer is built on the Flask framework with the following components:
+The application layer is built on the Flask framework (`app.py`, `routes.py`, `api/routes.py`) with the following components:
 
-- **Web Routes**: Serve HTML templates and handle user requests
-- **API Routes**: Provide JSON endpoints for real-time data
-- **Template Engine**: Renders HTML templates with dynamic data
-- **Static Assets**: Serves CSS, JavaScript, and other static resources
+- **Web Routes (`routes.py`)**: Defines the main route (`/`) that renders the primary HTML page using Jinja2 templates (`base.html`, `index.html`, partials).
+- **API Routes (`api/routes.py`)**: Provides JSON endpoints (e.g., `/api/weather`, `/api/trains`) accessed by the client-side JavaScript to fetch real-time data.
+- **Template Engine (Jinja2)**: Renders HTML templates, enabling modular design with base layouts and partials.
+- **Static Asset Serving**: Serves static files like CSS (`static/css/style.css`) and JavaScript (`static/js/dashboard.js`).
+- **Configuration (`config/config.py`)**: Manages application settings like API URLs and cache paths.
 
 ### 3. Data Service Layer
 

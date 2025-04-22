@@ -6,9 +6,9 @@ The MARTA Transit Dashboard features interactive maps for visualizing bus and tr
 
 ## Technology Stack
 
-- **Leaflet.js**: Core mapping library
+- **Leaflet.js**: Core mapping library (loaded via CDN in `templates/base.html`)
 - **OpenStreetMap**: Tile provider for map backgrounds
-- **JavaScript**: Client-side implementation
+- **JavaScript**: Client-side implementation in `static/js/dashboard.js`
 - **MARTA APIs**: Data sources for transit information
 
 ## Map Components
@@ -29,7 +29,7 @@ The application includes two primary map components:
 
 ### Implementation Details
 
-The bus map is initialized in `index.html` with these key components:
+The bus map is initialized in `static/js/dashboard.js` with these key components:
 
 ```javascript
 // Create the bus map using Leaflet
@@ -53,7 +53,7 @@ busMap.setMaxBounds(atlantaBounds.pad(0.1));
 
 ### Bus Marker Creation
 
-Bus markers are created dynamically from API data:
+Bus markers are created dynamically from API data within `static/js/dashboard.js`:
 
 ```javascript
 // Only create markers for buses within Atlanta bounds
@@ -76,7 +76,7 @@ if (atlantaBounds.contains(busLatLng)) {
 
 ### Automatic View Adjustment
 
-The map automatically adjusts to show all active buses:
+The map automatically adjusts to show all active buses, implemented in `static/js/dashboard.js`:
 
 ```javascript
 // Create a feature group for buses within Atlanta bounds
@@ -106,7 +106,7 @@ if (validMarkers.length > 0) {
 
 ### Station Data Model
 
-The train map uses a comprehensive station data model with accurate GPS coordinates:
+The train map uses a comprehensive station data model defined in `static/js/dashboard.js`:
 
 ```javascript
 // MARTA train station coordinates
@@ -122,7 +122,7 @@ const trainStations = {
 
 ### Train Line Rendering
 
-Train lines are rendered as polylines connecting station coordinates:
+Train lines are rendered as polylines connecting station coordinates, using the `drawRouteLine` function in `static/js/dashboard.js`:
 
 ```javascript
 function drawRouteLine(stationNames, color, weight) {
@@ -147,7 +147,7 @@ function drawRouteLine(stationNames, color, weight) {
 
 ### Station Filtering
 
-The train map includes a filtering feature that shows trains arriving at a selected station:
+The train map includes a filtering feature implemented in `static/js/dashboard.js`:
 
 ```javascript
 function filterTrainsByDestination(stationName) {
@@ -177,7 +177,7 @@ function filterTrainsByDestination(stationName) {
 
 ### Train Icons
 
-Train icons are dynamically created based on line color:
+Train icons are dynamically created based on line color using the `createTrainIcon` function in `static/js/dashboard.js`:
 
 ```javascript
 function createTrainIcon(line) {
@@ -196,7 +196,7 @@ function createTrainIcon(line) {
 
 ### Map Initialization
 
-Maps are only initialized when they become visible to save resources:
+Maps are only initialized when they become visible (using event listeners in `static/js/dashboard.js`) to save resources:
 
 ```javascript
 document.getElementById('showTrains').addEventListener('click', function() {
@@ -217,7 +217,7 @@ document.getElementById('showTrains').addEventListener('click', function() {
 
 ### Marker Management
 
-Markers are efficiently managed to prevent memory leaks:
+Markers are efficiently managed within `static/js/dashboard.js` to prevent memory leaks:
 
 ```javascript
 // Clear previous train markers
@@ -227,7 +227,7 @@ trainMarkers = [];
 
 ### Geographic Filtering
 
-Data is filtered geographically to avoid overloading the map:
+Data is filtered geographically within `static/js/dashboard.js` to avoid overloading the map:
 
 ```javascript
 // Only show buses within Atlanta bounds

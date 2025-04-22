@@ -74,23 +74,23 @@ This document describes the flow of data through the MARTA Transit Dashboard sys
 ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
 │                 │      │                 │      │                 │
 │  Browser        │─┐    │  Web Routes     │─┐    │  API Routes     │
-│  (index.html)   │ │    │  (routes.py)    │ │    │  (api/routes.py)│
+│                 │ │    │  (routes.py)    │ │    │  (api/routes.py)│
 │                 │ │    │                 │ │    │                 │
-└─────────────────┘ │    └─────────────────┘ │    └────────┬────────┘
-                    │                        │             │
-                    │                        │             │
-                    │    ┌─────────────────┐ │             │
-                    └───►│                 │◄┘             │
-                         │  Templates      │               │
-                         │  (index.html)   │               │
-                         │                 │               │
-                         └─────────────────┘               │
+└─────────┬───────┘ │    └────────┬────────┘ │    └────────┬────────┘
+          │         │             │          │             │
+          ▼         │             ▼          │             │
+┌─────────────────┐ │ ┌────────────────────┐ │             │
+│ static/js/      │◄┘ │ Templates          │◄┘             │
+│ dashboard.js    │   │ (base.html,        │               │
+│ (Handles UI,    │   │  partials,         │               │
+│  AJAX calls)    │   │  index.html)       │               │
+└─────────────────┘   └────────────────────┘               │
                                                            │
                                                            ▼
                                                   ┌────────────────┐
                                                   │                │
                                                   │ Data Services  │
-                                                  │                │
+                                                  │ (utils/*)      │
                                                   └────────┬───────┘
                                                            │
                                                            │
@@ -108,8 +108,8 @@ This document describes the flow of data through the MARTA Transit Dashboard sys
 ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
 │                 │      │                 │      │                 │
 │  JavaScript     │      │  Fetch API      │      │  API Routes     │
-│  (Client-side)  ├─────►│  AJAX Requests  ├─────►│  /api/trains    │
-│                 │      │                 │      │  /api/buses     │
+│  (dashboard.js) ├─────►│  (fetchData fn) ├─────►│  /api/trains    │
+│                 │      │                 │      │  /api/buses/... │
 └─────────────────┘      └─────────────────┘      │  /api/weather   │
        ▲                                          │                 │
        │                                          └────────┬────────┘

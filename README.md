@@ -57,7 +57,6 @@ marta_transit_dashboard/
 - Open-Meteo weather API packages
 - Google Protobuf (for GTFS-RT bus data)
 - Leaflet.js (loaded via CDN in `base.html`)
-- Gunicorn (for production deployment)
 
 ## Installation
 

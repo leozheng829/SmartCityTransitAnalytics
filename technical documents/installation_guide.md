@@ -54,23 +54,9 @@ pip install -r requirements.txt
 
 ### 4. Configuration
 
-Create a configuration file by copying the example:
+Verify the settings in `config/config.py`. You may need to add your MARTA Train API key if it's not already present. See the [Configuration Guide](configuration_guide.md) for details on all settings.
 
-```bash
-cp config/config.example.py config/config.py
-```
-
-Edit `config/config.py` to include your MARTA API key and any other custom settings. See the [Configuration Guide](configuration_guide.md) for details.
-
-### 5. Create Required Directories
-
-Ensure cache directories exist:
-
-```bash
-mkdir -p cache
-```
-
-### 6. Running the Application
+### 5. Running the Application
 
 Start the Flask development server:
 
@@ -78,4 +64,4 @@ Start the Flask development server:
 python run.py
 ```
 
-The application should now be running at [http://localhost:5000](http://localhost:5000).
+The application should now be running, typically at [http://localhost:5001](http://localhost:5001) (check the terminal output or `config/config.py` for the exact address).

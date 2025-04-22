@@ -6,42 +6,45 @@ This document details how to configure the MARTA Transit Dashboard application f
 
 ## Configuration Files
 
-The main configuration files are located in the `config/` directory:
-
-- `config.py` - Main configuration file (created by copying `config.example.py`)
-- `config.example.py` - Example configuration with documented options
+The main configuration file is located at `config/config.py`.
 
 ## Basic Configuration
 
+All settings are managed within the `config/config.py` file. You can edit this file directly to customize the application behavior.
+
 ### Required Configuration
 
-At minimum, you need to set up the following configuration options:
+Ensure the following settings are correctly configured in `config/config.py`:
 
-1. **MARTA API Key**: Required for accessing train data
-2. **Cache Directory**: Location to store cached API responses
-3. **Server Settings**: Host, port, and debug mode
+1. **MARTA Train API Key**: Required for accessing train data (`MARTA_TRAIN_API_KEY`). You may need to obtain this from MARTA Developer Resources.
+2. **API URLs**: Check that the URLs for MARTA and Weather APIs are correct.
+3. **Cache Directory**: Verify the path where cached data will be stored (`CACHE_DIR`, `*_CACHE_FILE`).
+4. **Server Settings**: Adjust the `HOST`, `PORT`, and `DEBUG` mode as needed for your development environment.
 
-### Example Basic Configuration
+### Example Configuration Snippets (from `config/config.py`)
 
 ```python
 # MARTA API settings
-MARTA_TRAIN_API_KEY = "your-api-key-here"
-MARTA_TRAIN_API_URL = "http://developer.itsmarta.com/RealtimeTrain/RestServiceNextTrain/GetRealtimeArrivals"
+MARTA_TRAIN_API_KEY = "3b78f59c-e96d-4085-a291-eefb29bc5ecf" # Replace if needed
+MARTA_TRAIN_API_URL = "https://developerservices.itsmarta.com:18096/itsmarta/railrealtimearrivals/developerservices/traindata"
+# ... other API URLs ...
 
 # Cache settings
-CACHE_DIR = "cache"
-TRAIN_CACHE_FILE = "cache/train_data.json"
-BUS_POSITIONS_CACHE_FILE = "cache/bus_positions.json"
-BUS_TRIPS_CACHE_FILE = "cache/bus_trips.json"
-WEATHER_CACHE_FILE = "cache/weather_data.json"
+CACHE_DIR = os.path.join(BASE_DIR, 'cache')
+TRAIN_CACHE_FILE = os.path.join(CACHE_DIR, 'train_data.json')
+# ... other cache files ...
+CACHE_EXPIRATION = 3600 # Default cache time in seconds
 
-# Server settings
+# Application settings (for development server)
 DEBUG = True
-PORT = 5000
-HOST = "0.0.0.0"
+PORT = 5001
+HOST = '0.0.0.0'
+TEMPLATES_AUTO_RELOAD = True
 ```
 
 ## Advanced Configuration Options
+
+All advanced options are also set within `config/config.py`.
 
 ### API Endpoints and Keys
 
@@ -118,39 +121,15 @@ LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 ENABLE_CONSOLE_LOGGING = True
 ```
 
-## Environment Variables
-
-The application also supports configuration via environment variables, which override values in the config file:
-
-| Environment Variable | Description | Example |
-|----------------------|-------------|---------|
-| `MARTA_API_KEY` | MARTA Train API key | `your-api-key` |
-| `DEBUG` | Enable debug mode | `True` or `False` |
-| `PORT` | Server port | `5000` |
-| `HOST` | Server host | `0.0.0.0` |
-| `CACHE_DIR` | Directory for cached data | `cache` |
-
-### Using Environment Variables
-
-```bash
-# Linux/macOS
-export MARTA_API_KEY=your-api-key
-export PORT=8080
-
-# Windows
-set MARTA_API_KEY=your-api-key
-set PORT=8080
-```
-
 ## Setting Up API Keys
 
 ### MARTA API Key
 
-1. Visit [MARTA Developer Resources](http://www.itsmarta.com/app-developer-resources.aspx)
-2. Register for an API key
-3. Add the key to your `config.py` file:
+1. If the `MARTA_TRAIN_API_KEY` in `config/config.py` is a placeholder or invalid, visit [MARTA Developer Resources](http://www.itsmarta.com/app-developer-resources.aspx).
+2. Register for an API key if you don't have one.
+3. Update the `MARTA_TRAIN_API_KEY` variable in `config/config.py` with your valid key:
    ```python
-   MARTA_TRAIN_API_KEY = "your-marta-api-key"
+   MARTA_TRAIN_API_KEY = "your-actual-marta-api-key"
    ```
 
 ## Troubleshooting Configuration Issues
